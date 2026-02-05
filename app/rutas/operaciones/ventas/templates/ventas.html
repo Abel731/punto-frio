@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Ventas
+{% endblock %}
+
+{% block contenido %}
+<div class="mt-4">
+
+  <h3>Ventas del día</h3>
+
+  <!-- FORMULARIO DE VENTA -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="form-row">
+
+        <div class="col-md-5">
+          <label>Producto</label>
+          <select class="form-control" id="producto_id">
+            {% for p in productos %}
+              <option value="{{ p.id }}">
+                {{ p.nombre }} (Stock: {{ p.stock }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label>Cantidad</label>
+          <input
+            class="form-control"
+            type="number"
+            id="cantidad"
+            value="1"
+            min="1">
+        </div>
+
+        <div class="col-md-3">
+          <label>Método de pago</label>
+          <select class="form-control" id="metodo_pago">
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-primary btn-block" id="btnVender">
+            Registrar venta
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TOTALES DEL DÍA -->
+  <div class="alert alert-info">
+    <strong>Total del día:</strong>
+    ₲ <span id="totalDia">0</span>
+    &nbsp; | &nbsp;
+    <strong>Efectivo:</strong>
+    ₲ <span id="totalEfectivo">0</span>
+    &nbsp; | &nbsp;
+    <strong>Transferencia:</strong>
+    ₲ <span id="totalTransferencia">0</span>
+  </div>
+
+  <!-- TABLA DE VENTAS -->
+  <table class="table table-striped" id="tblVentas">
+    <thead>
+      <tr>
+        <th>ID Venta</th>
+        <th>Fecha</th>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio</th>
+        <th>Subtotal</th>
+        <th>Total Venta</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const URL_API = "/ventas/api";
+  let tabla = null;
+
+  const cargarTabla = () => {
+    if (tabla) {
+      tabla.ajax.reload(null, false);
+      return;
+    }
+
+    tabla = $("#tblVentas").DataTable({
+      ajax: {
+        url: URL_API,
+        dataSrc: function (json) {
+          const r = json.resumen || {
+            total_dia: 0,
+            total_efectivo: 0,
+            total_transferencia: 0
+          };
+
+          document.getElementById("totalDia").textContent = r.total_dia;
+          document.getElementById("totalEfectivo").textContent = r.total_efectivo;
+          document.getElementById("totalTransferencia").textContent = r.total_transferencia;
+
+          return json.data || [];
+        }
+      },
+      order: [[1, "desc"]],
+      columns: [
+        { data: "venta_id" },
+        { data: "fecha" },
+        { data: "producto" },
+        { data: "cantidad" },
+        { data: "precio_unitario" },
+        { data: "subtotal" },
+        { data: "total" }
+      ]
+    });
+  };
+
+  const vender = async () => {
+    const producto_id = parseInt(document.getElementById("producto_id").value, 10);
+    const cantidad = parseInt(document.getElementById("cantidad").value, 10);
+    const metodo_pago = document.getElementById("metodo_pago").value;
+
+    if (!producto_id || cantidad <= 0) {
+      Swal.fire("Atención", "Datos de venta inválidos", "warning");
+      return;
+    }
+
+    const resp = await fetch(URL_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        producto_id,
+        cantidad,
+        metodo_pago
+      })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok || !data.success) {
+      Swal.fire("Error", data.error || "No se pudo registrar la venta", "error");
+      return;
+    }
+
+    Swal.fire("Venta registrada", "La venta fue guardada correctamente", "success");
+    cargarTabla();
+  };
+
+  $(document).ready(function () {
+    cargarTabla();
+    $("#btnVender").on("click", vender);
+  });
+</script>
+{% endblock %}

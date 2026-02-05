@@ -1,0 +1,27 @@
+# Variables de entorno (NO subir)
+.env
+.envv
+
+# Entornos virtuales
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code
+.vscode/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Bases locales / temporales
+*.sqlite3
+
+# Logs
+*.log

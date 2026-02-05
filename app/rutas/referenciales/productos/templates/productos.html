@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Productos{% endblock %}
+
+{% block contenido %}
+<div class="mt-4">
+  <h3>Listar Productos</h3>
+
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio (₲)</th>
+            <th>Stock</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modalFormulario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle"></h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="txtId">
+
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" class="form-control" id="txtNombre" placeholder="Ej: Coca-Cola 500ml">
+          </div>
+
+          <div class="form-group">
+            <label>Precio venta (₲)</label>
+            <input type="number" class="form-control" id="txtPrecio" placeholder="Ej: 5000">
+          </div>
+
+          <div class="form-group">
+            <label>Stock</label>
+            <input type="number" class="form-control" id="txtStock" value="0">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const URL_API = "/productos/api";
+  let tabla = null;
+
+  const initDatatable = () => {
+    tabla = $('#tbl').DataTable({
+      ajax: {
+        url: URL_API,
+        dataSrc: 'data'
+      },
+      columns: [
+        { data: 'id' },
+        { data: 'nombre' },
+        { data: 'precio_venta' },
+        { data: 'stock' },
+        {
+          data: function(row) {
+            return `
+              <button type="button" name="btn_editar" class="btn btn-sm btn-primary" data-id="${row.id}">Editar</button>
+              <button type="button" name="btn_eliminar" class="btn btn-sm btn-danger" data-id="${row.id}">Eliminar</button>
+            `;
+          }
+        }
+      ]
+    });
+  };
+
+  const abrirModalAgregar = () => {
+    $('#modalTitle').text("Agregar Producto");
+    $('#txtId').val("");
+    $('#txtNombre').val("");
+    $('#txtPrecio').val("");
+    $('#txtStock').val("0");
+    $('#modalFormulario').modal();
+  };
+
+  const abrirModalEditar = async (id) => {
+    const resp = await fetch(`${URL_API}/${id}`);
+    const data = await resp.json();
+
+    if (!resp.ok || !data.success) {
+      Swal.fire("Error", data.error || "No se pudo cargar el producto", "error");
+      return;
+    }
+
+    $('#modalTitle').text("Editar Producto");
+    $('#txtId').val(data.data.id);
+    $('#txtNombre').val(data.data.nombre);
+    $('#txtPrecio').val(data.data.precio_venta);
+    $('#txtStock').val(data.data.stock);
+    $('#modalFormulario').modal();
+  };
+
+  const guardar = async () => {
+    const id = $('#txtId').val();
+    const payload = {
+      nombre: $('#txtNombre').val(),
+      precio_venta: $('#txtPrecio').val(),
+      stock: $('#txtStock').val()
+    };
+
+    const esEditar = Boolean(id);
+    const url = esEditar ? `${URL_API}/${id}` : URL_API;
+    const method = esEditar ? "PUT" : "POST";
+
+    const resp = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok || !data.success) {
+      Swal.fire("Error", data.error || "No se pudo guardar", "error");
+      return;
+    }
+
+    $('#modalFormulario').modal('hide');
+    tabla.ajax.reload(null, false);
+
+    Swal.fire(esEditar ? "Actualizado" : "Guardado",
+              esEditar ? "Producto actualizado" : "Producto agregado",
+              "success");
+  };
+
+  const eliminar = async (id) => {
+    const result = await Swal.fire({
+      title: "¿Eliminar este producto?",
+      text: "Se marcará como inactivo.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "No"
+    });
+
+    if (!result.isConfirmed) return;
+
+    const resp = await fetch(`${URL_API}/${id}`, { method: "DELETE" });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.success) {
+      Swal.fire("Error", data.error || "No se pudo eliminar", "error");
+      return;
+    }
+
+    tabla.ajax.reload(null, false);
+    Swal.fire("Eliminado", "Producto eliminado correctamente", "success");
+  };
+
+  const addEvents = () => {
+    $('#btnAgregar').on('click', abrirModalAgregar);
+    $('#btnGuardar').on('click', guardar);
+
+    $('#tbl').on('click', 'button[name="btn_editar"]', function() {
+      const id = $(this).data('id');
+      abrirModalEditar(id);
+    });
+
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function() {
+      const id = $(this).data('id');
+      eliminar(id);
+    });
+  };
+
+  $(document).ready(function() {
+    initDatatable();
+    addEvents();
+  });
+</script>
+{% endblock %}
