@@ -1,17 +1,24 @@
 from werkzeug.security import generate_password_hash
 from app.conexion.Conexion import Conexion
 
-usuario = "admin"
-password = ""  # luego cambiás
+# 👇 CAMBIÁ ESTOS DATOS
+USUARIO = "admin"
+PASSWORD = "19732713"   # después la cambiás por la que quieras
+
+hash_password = generate_password_hash(PASSWORD)
 
 con = Conexion().getConexion()
 cur = con.cursor()
-cur.execute("""
-  INSERT INTO usuarios (usuario, password_hash)
-  VALUES (%s, %s)
-  ON CONFLICT (usuario) DO NOTHING;
-""", (usuario, generate_password_hash(password)))
-con.commit()
-cur.close(); con.close()
 
-print("✅ Usuario admin creado")
+cur.execute("""
+    INSERT INTO usuarios (usuario, password_hash, activo)
+    VALUES (%s, %s, TRUE)
+""", (USUARIO, hash_password))
+
+con.commit()
+cur.close()
+con.close()
+
+print("✅ Usuario admin creado correctamente")
+print("Usuario:", USUARIO)
+print("Password:", PASSWORD)
