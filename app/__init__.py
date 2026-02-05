@@ -9,7 +9,7 @@ from app.rutas.operaciones.ventas.ventas_routes import bp_ventas
 
 from app.rutas.auth.auth_routes import bp_auth
 
-
+from app.rutas.inicio_routes import bp_inicio
 
 
 
@@ -22,6 +22,8 @@ def crear_app():
     app.register_blueprint(bp_productos)
 
     app.register_blueprint(bp_ventas)
+
+    app.register_blueprint(bp_inicio)
 
     app.register_blueprint(bp_auth)
 
