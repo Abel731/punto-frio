@@ -19,41 +19,70 @@
     body {
       background: #f6f7fb;
     }
+
     .sidebar {
       min-height: 100vh;
       background: #212529;
       color: white;
     }
+
     .sidebar a {
       color: rgba(255,255,255,.85);
     }
+
     .sidebar a:hover {
       color: white;
       text-decoration: none;
     }
+
     .menu-title {
       font-size: .8rem;
       text-transform: uppercase;
       opacity: .7;
       margin-top: 1rem;
     }
+
     .content {
       padding: 20px;
+    }
+
+    /* 🔥 MOBILE FIXES */
+    @media (max-width: 768px) {
+      .sidebar {
+        min-height: auto;
+      }
+      .content {
+        padding: 12px;
+      }
     }
   </style>
 </head>
 
 <body>
+
+  <!-- TOPBAR SOLO EN MÓVIL -->
+  <nav class="navbar navbar-dark bg-dark d-md-none">
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-toggle="collapse"
+      data-target="#sidebarMenu">
+      ☰
+    </button>
+    <span class="navbar-brand mb-0 h6">Punto Frío</span>
+  </nav>
+
   <div class="container-fluid">
     <div class="row">
 
       <!-- SIDEBAR -->
-      <aside class="col-12 col-md-3 col-lg-2 sidebar p-3">
+      <aside
+        id="sidebarMenu"
+        class="col-12 col-md-3 col-lg-2 sidebar p-3 collapse d-md-block">
 
-        <h5 class="mb-3">Punto Frío</h5>
+        <h5 class="mb-3 d-none d-md-block">Punto Frío</h5>
 
         {% if usuario_logueado %}
-          <!-- USUARIO LOGUEADO -->
           <div class="mb-3 p-2 rounded" style="background:#343a40;">
             <div style="font-size:.8rem; opacity:.8;">Usuario</div>
             <strong>{{ usuario_logueado }}</strong>
