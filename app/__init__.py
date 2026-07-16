@@ -1,7 +1,5 @@
 from flask import Flask
 
-
-
 # importar blueprints
 # from app.rutas.referenciales.productos.productos_routes import bp_productos
 
