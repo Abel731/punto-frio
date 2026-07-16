@@ -9,7 +9,7 @@ bp_auth = Blueprint(
     template_folder="templates"
 )
 
-@bp_auth.get("/")
+@bp_auth.route("/")
 def login():
     return render_template("index.html", error=None)
 
